@@ -1,4 +1,4 @@
-package main
+package popcount
 
 var pc [256]byte
 
@@ -15,6 +15,7 @@ func PopCount(x uint64) int {
 		sum += pc[byte(x>>(i*8))]
 	}
 	return int(sum)
+
 	// return int(pc[byte(x>>(0*8))] +
 	// 	pc[byte(x>>(1*8))] +
 	// 	pc[byte(x>>(2*8))] +
