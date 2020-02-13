@@ -8,6 +8,7 @@ import (
 	"github.com/go-dev/web-server/session"
 	ptemplate "github.com/go-dev/web-server/template"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	"html/template"
 	"net/http"
 )
@@ -74,6 +75,33 @@ func main() {
 			Age:       25,
 		}
 		json.NewEncoder(w).Encode(peter)
+	})
+
+	//Use websocket
+	var upgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
+	r.HandleFunc("/websocket", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "views/websocket.html")
+	})
+	r.HandleFunc("/websocket/echo", func(w http.ResponseWriter, r *http.Request) {
+		conn, _ := upgrader.Upgrade(w, r, nil) // error ignored for sake of simplicity
+
+		for {
+			msgType, msg, err := conn.ReadMessage()
+			if err != nil {
+				return
+			}
+
+			// Print the message to the console
+			fmt.Printf("%s sent: %s\n", conn.RemoteAddr(), string(msg))
+
+			// Write message back to browser
+			if err = conn.WriteMessage(msgType, msg); err != nil {
+				return
+			}
+		}
 	})
 
 	// books 请求示例
