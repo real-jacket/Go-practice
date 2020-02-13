@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/go-dev/web-server/middleware"
 	sqlop "github.com/go-dev/web-server/mysql"
+	"github.com/go-dev/web-server/session"
 	ptemplate "github.com/go-dev/web-server/template"
 	"github.com/gorilla/mux"
 	"html/template"
@@ -43,7 +45,36 @@ func main() {
 	// use middleware
 	r.HandleFunc("/middleware", middleware.Chain(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "hello world")
-	}, middleware.Logging()))
+	}, middleware.Logging(), middleware.Method("GET")))
+
+	// use session and cookie
+	s := r.PathPrefix("/session").Subrouter()
+	s.HandleFunc("/secret", session.Secret)
+	s.HandleFunc("/login", session.Login)
+	s.HandleFunc("/logout", session.Logout)
+
+	// use  json
+	type User struct {
+		FirstName string `json:"first_name"`
+		LastName  string `json:"last_name"`
+		Age       int    `json:"age"`
+	}
+
+	r.HandleFunc("/decode", func(w http.ResponseWriter, r *http.Request) {
+		var user User
+		json.NewDecoder(r.Body).Decode(&user)
+
+		fmt.Fprintf(w, "%s %s is %d years old!", user.FirstName, user.LastName, user.Age)
+	})
+
+	r.HandleFunc("/encode", func(w http.ResponseWriter, r *http.Request) {
+		peter := User{
+			FirstName: "John",
+			LastName:  "Doe",
+			Age:       25,
+		}
+		json.NewEncoder(w).Encode(peter)
+	})
 
 	// books 请求示例
 	r.HandleFunc("/books/{title}/page/{page}", func(w http.ResponseWriter, r *http.Request) {
