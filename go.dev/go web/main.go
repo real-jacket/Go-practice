@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/go-dev/web-server/middleware"
 	sqlop "github.com/go-dev/web-server/mysql"
+	nbcrypt "github.com/go-dev/web-server/passwordHashing"
 	"github.com/go-dev/web-server/session"
 	ptemplate "github.com/go-dev/web-server/template"
 	"github.com/gorilla/mux"
@@ -103,6 +104,16 @@ func main() {
 			}
 		}
 	})
+
+	// passwordHashing
+	password := "secret"
+	hash, _ := nbcrypt.HashPassword(password) // ignore error for the sake of simplicity
+
+	fmt.Println("Password", password)
+	fmt.Println("Hash: ", hash)
+
+	match := nbcrypt.CheckPasswordHash(password, hash)
+	fmt.Println("Match", match)
 
 	// books 请求示例
 	r.HandleFunc("/books/{title}/page/{page}", func(w http.ResponseWriter, r *http.Request) {
