@@ -1,0 +1,13 @@
+{{define "form"}}
+    {{if .Success}}
+        <h1>Thanks for your message!</h1>
+    {{else}}
+        <h1>Content</h1>
+        <form method="post">
+            <label>Email: <input type="text" name="email"/></label><br/>
+            <label>Subject: <input type="text" name="subject"/></label><br/>
+            <label>Message: <textarea name="message"></textarea></label>
+            <button type="submit">提交</button>
+        </form>
+    {{end}}
+{{end}}

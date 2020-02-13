@@ -22,3 +22,9 @@ func TempTodoPage() TodoPageDate {
 	}
 	return data
 }
+
+type ContactDetails struct {
+	Email   string
+	Subject string
+	Message string
+}

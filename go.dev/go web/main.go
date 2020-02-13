@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	sqlop "github.com/go-dev/web-server/mysql"
-	palmate "github.com/go-dev/web-server/template"
+	ptemplate "github.com/go-dev/web-server/template"
 	"github.com/gorilla/mux"
 	"html/template"
 	"net/http"
@@ -15,10 +15,28 @@ func main() {
 	r := mux.NewRouter()
 
 	//Todo page
-	tmpl := template.Must(template.ParseFiles("layout.html"))
+	tmpl := template.Must(template.ParseFiles("views/layout.html", "views/form.html"))
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		data := palmate.TempTodoPage()
-		tmpl.Execute(w, data)
+		tmpl.ExecuteTemplate(w, "index", ptemplate.TempTodoPage())
+	})
+
+	//Form page
+	r.HandleFunc("/form", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			tmpl.ExecuteTemplate(w, "form", nil)
+			return
+		}
+
+		tmpl.ExecuteTemplate(w, "form", struct {
+			Success bool
+		}{true})
+
+		details := ptemplate.ContactDetails{
+			Email:   r.FormValue("email"),
+			Subject: r.FormValue("subject"),
+			Message: r.FormValue("message"),
+		}
+		fmt.Println(details)
 	})
 
 	// books 请求示例
