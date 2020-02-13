@@ -35,5 +35,9 @@ func main() {
 		fmt.Fprintf(w, "Add one row")
 	})
 
-	http.ListenAndServe(":80", r)
+	//  server 静态文件目录
+	fs := http.FileServer(http.Dir("assets/"))
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
+
+	http.ListenAndServe(":8080", r)
 }
