@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/go-dev/web-server/middleware"
 	sqlop "github.com/go-dev/web-server/mysql"
 	ptemplate "github.com/go-dev/web-server/template"
 	"github.com/gorilla/mux"
@@ -38,6 +39,11 @@ func main() {
 		}
 		fmt.Println(details)
 	})
+
+	// use middleware
+	r.HandleFunc("/middleware", middleware.Chain(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "hello world")
+	}, middleware.Logging()))
 
 	// books 请求示例
 	r.HandleFunc("/books/{title}/page/{page}", func(w http.ResponseWriter, r *http.Request) {
