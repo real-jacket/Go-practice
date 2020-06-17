@@ -1,6 +1,8 @@
 package hello
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestHello(t *testing.T) {
 	want := "Hello world."
