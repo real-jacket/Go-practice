@@ -1,8 +1,18 @@
 package main
 
 import (
+	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"html/template"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/go-dev/web-server/middleware"
 	sqlop "github.com/go-dev/web-server/mysql"
 	nbcrypt "github.com/go-dev/web-server/passwordHashing"
@@ -10,9 +20,62 @@ import (
 	ptemplate "github.com/go-dev/web-server/template"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"html/template"
-	"net/http"
 )
+
+func sayHelloName(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	fmt.Println(r.Form)
+	fmt.Println("path: ", r.URL.Path)
+	fmt.Println("scheme", r.URL.Scheme)
+	fmt.Println(r.Form["url_long"])
+	for k, v := range r.Form {
+		fmt.Println("key:", k)
+		fmt.Println("val:", strings.Join(v, ""))
+	}
+	fmt.Fprintf(w, "hello astaxie!")
+
+}
+
+func login(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("method:", r.Method)
+	if r.Method == "GET" {
+		t, _ := template.ParseFiles("views/login.gtpl")
+		log.Println(t.Execute(w, nil))
+	} else {
+		fmt.Println("username:", r.FormValue("username"))
+		fmt.Println("password:", r.FormValue("password"))
+	}
+}
+
+// 处理/upload 逻辑
+func upload(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("method:", r.Method) //获取请求的方法
+	if r.Method == "GET" {
+		crutime := time.Now().Unix()
+		h := md5.New()
+		io.WriteString(h, strconv.FormatInt(crutime, 10))
+		token := fmt.Sprintf("%x", h.Sum(nil))
+
+		t, _ := template.ParseFiles("./views/upload.gtpl")
+		t.Execute(w, token)
+	} else {
+		r.ParseMultipartForm(32 << 20)
+		file, handler, err := r.FormFile("uploadfile")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		defer file.Close()
+		fmt.Fprintf(w, "%v", handler.Header)
+		f, err := os.OpenFile("./test/"+handler.Filename, os.O_WRONLY|os.O_CREATE, 0666) // 此处假设当前目录下已存在test目录
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		defer f.Close()
+		io.Copy(f, file)
+	}
+}
 
 func main() {
 	db := sqlop.StartMysql()
@@ -21,9 +84,13 @@ func main() {
 
 	//Todo page
 	tmpl := template.Must(template.ParseFiles("views/layout.html", "views/form.html"))
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		tmpl.ExecuteTemplate(w, "index", ptemplate.TempTodoPage())
-	})
+	// r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	// 	tmpl.ExecuteTemplate(w, "index", ptemplate.TempTodoPage())
+	// })
+
+	r.HandleFunc("/", sayHelloName)
+	r.HandleFunc("/login", login)
+	r.HandleFunc("/upload", upload)
 
 	//Form page
 	r.HandleFunc("/form", func(w http.ResponseWriter, r *http.Request) {
@@ -132,6 +199,8 @@ func main() {
 	//  server 静态文件目录
 	fs := http.FileServer(http.Dir("assets/"))
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
+
+	http.Handle("/", r)
 
 	http.ListenAndServe(":8080", r)
 }
