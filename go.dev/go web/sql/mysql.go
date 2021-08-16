@@ -1,11 +1,12 @@
-package sqlop
+package sql
 
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"time"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 // start mysql
@@ -28,6 +29,7 @@ func CreateTable(db *sql.DB) {
 			id INT AUTO_INCREMENT,
 			password TEXT NOT NULL,
 			username TEXT NOT NULL,
+			department TEXT NOT NULL,
 			created_at DATETIME,
 			PRIMARY KEY (id)
 		);`
@@ -46,7 +48,24 @@ func InsertRow(db *sql.DB) {
 		log.Fatal(err)
 	}
 	id, err := result.LastInsertId()
+	if err != nil {
+		fmt.Println(err)
+	}
 	fmt.Println(id)
+}
+
+func InsertRow2(db *sql.DB) {
+	stmt, err := db.Prepare("INSERT INTO userinfo SET username=?,department=?,created=?")
+	checkErr(err)
+
+	res, err := stmt.Exec("astaxie", "研发部门", "2012-12-09")
+	checkErr(err)
+
+	id, err := res.LastInsertId()
+	checkErr(err)
+
+	fmt.Println("id:", id)
+
 }
 
 func QueryRow(db *sql.DB) {
@@ -85,15 +104,44 @@ func QueryRows(db *sql.DB) {
 			log.Fatal(err)
 		}
 		users = append(users, u)
+
+		fmt.Println(users)
 	}
 	if err := rows.Err(); err != nil {
 		log.Fatal(err)
 	}
 }
 
+func QueryAll(db *sql.DB) {
+	rows, err := db.Query("SELECT * FROM userinfo")
+	checkErr(err)
+
+	for rows.Next() {
+		var uid int
+		var username string
+		var department string
+		var created string
+		err = rows.Scan(&uid, &username, &department, &created)
+
+		checkErr(err)
+
+		fmt.Println(uid)
+		fmt.Println(username)
+		fmt.Println(department)
+		fmt.Println(created)
+	}
+
+}
+
 func DeleteRow(db *sql.DB) {
 	_, err := db.Exec(`DELETE FROM users WHERE id = ?`, 1)
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func checkErr(err error) {
+	if err != nil {
+		panic(err)
 	}
 }

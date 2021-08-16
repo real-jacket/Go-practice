@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/go-dev/web-server/middleware"
-	sqlop "github.com/go-dev/web-server/mysql"
 	nbcrypt "github.com/go-dev/web-server/passwordHashing"
 	"github.com/go-dev/web-server/session"
+	sqlop "github.com/go-dev/web-server/sql"
 	ptemplate "github.com/go-dev/web-server/template"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -79,7 +79,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	db := sqlop.StartMysql()
-	//sqlop.CreateTable(db)
+	// sqlop.CreateTable(db)
 	r := mux.NewRouter()
 
 	//Todo page
@@ -91,6 +91,14 @@ func main() {
 	r.HandleFunc("/", sayHelloName)
 	r.HandleFunc("/login", login)
 	r.HandleFunc("/upload", upload)
+
+	r.HandleFunc("/mysql", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "GET" {
+			sqlop.InsertRow2(db)
+			sqlop.QueryAll(db)
+		}
+		fmt.Fprintf(w, "sql success!")
+	})
 
 	//Form page
 	r.HandleFunc("/form", func(w http.ResponseWriter, r *http.Request) {
