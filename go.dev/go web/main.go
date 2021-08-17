@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -36,15 +35,39 @@ func sayHelloName(w http.ResponseWriter, r *http.Request) {
 
 }
 
+var globalSessions *session.Manager
+
 func login(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("method:", r.Method)
+	sess := globalSessions.SessionStart(w, r)
+	r.ParseForm()
 	if r.Method == "GET" {
-		t, _ := template.ParseFiles("views/login.gtpl")
-		log.Println(t.Execute(w, nil))
+		t, _ := template.ParseFiles("./views/login.gtpl")
+		w.Header().Set("Content-Type", "text/html")
+		t.Execute(w, sess.Get("username"))
 	} else {
-		fmt.Println("username:", r.FormValue("username"))
-		fmt.Println("password:", r.FormValue("password"))
+		sess.Set("username", r.Form["username"])
+		http.Redirect(w, r, "/", 302)
 	}
+}
+
+func count(w http.ResponseWriter, r *http.Request) {
+	sess := globalSessions.SessionStart(w, r)
+	createtime := sess.Get("createtime")
+	if createtime == nil {
+		sess.Set("createtime", time.Now().Unix())
+	} else if (createtime.(int64) + 360) < (time.Now().Unix()) {
+		globalSessions.SessionDestroy(w, r)
+		sess = globalSessions.SessionStart(w, r)
+	}
+	ct := sess.Get("countnum")
+	if ct == nil {
+		sess.Set("countnum", 1)
+	} else {
+		sess.Set("countnum", (ct.(int) + 1))
+	}
+	t, _ := template.ParseFiles("count.gtpl")
+	w.Header().Set("Content-Type", "text/html")
+	t.Execute(w, sess.Get("countnum"))
 }
 
 // 处理/upload 逻辑
@@ -75,6 +98,10 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		defer f.Close()
 		io.Copy(f, file)
 	}
+}
+
+func init() {
+	go globalSessions.GC()
 }
 
 func main() {

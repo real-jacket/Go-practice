@@ -56,13 +56,13 @@ func InsertRow(db *sql.DB) {
 
 func InsertRow2(db *sql.DB) {
 	stmt, err := db.Prepare("INSERT INTO userinfo SET username=?,department=?,created=?")
-	checkErr(err)
+	CheckErr(err)
 
 	res, err := stmt.Exec("astaxie", "研发部门", "2012-12-09")
-	checkErr(err)
+	CheckErr(err)
 
 	id, err := res.LastInsertId()
-	checkErr(err)
+	CheckErr(err)
 
 	fmt.Println("id:", id)
 
@@ -114,7 +114,7 @@ func QueryRows(db *sql.DB) {
 
 func QueryAll(db *sql.DB) {
 	rows, err := db.Query("SELECT * FROM userinfo")
-	checkErr(err)
+	CheckErr(err)
 
 	for rows.Next() {
 		var uid int
@@ -123,7 +123,7 @@ func QueryAll(db *sql.DB) {
 		var created string
 		err = rows.Scan(&uid, &username, &department, &created)
 
-		checkErr(err)
+		CheckErr(err)
 
 		fmt.Println(uid)
 		fmt.Println(username)
@@ -140,7 +140,7 @@ func DeleteRow(db *sql.DB) {
 	}
 }
 
-func checkErr(err error) {
+func CheckErr(err error) {
 	if err != nil {
 		panic(err)
 	}
