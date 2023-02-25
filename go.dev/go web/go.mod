@@ -7,5 +7,5 @@ require (
 	github.com/gorilla/mux v1.7.4
 	github.com/gorilla/sessions v1.2.0
 	github.com/gorilla/websocket v1.4.1
-	golang.org/x/crypto v0.0.0-20200210222208-86ce3cb69678
+	golang.org/x/crypto v0.1.0
 )
